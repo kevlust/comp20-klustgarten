@@ -5,14 +5,13 @@
 	<head>
 		<title>Not Uber</title>
 		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=true&libraries=geometry"></script>
 		<link rel="stylesheet" href="style.css" />
 		
 		<script>
 			var myLat = 0;
 			var myLng = 0;
 			var myUserName = "52iVwuEg";
-
 			var me = new google.maps.LatLng(myLat, myLng);
 			var myOptions = {
 						zoom: 13, // The larger the zoom number, the bigger the zoom
@@ -26,16 +25,19 @@
 			
 			function init()
 			{
+				console.log('init function reached');
 				map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 				getMyLocation();
 			}
 			
 			function getMyLocation() {
-				console.log("getMyLocation()")
+				console.log("getMyLocation()");
 				if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
 					navigator.geolocation.getCurrentPosition(function(position) {
 						myLat = position.coords.latitude;
 						myLng = position.coords.longitude;
+						setData();
+
 						renderMap();
 					});
 				}
@@ -54,8 +56,11 @@
 				// Create a marker
 				marker = new google.maps.Marker({
 					position: me,
-					title: "Here I Am!"
+					title: 'hi',//myUserName,
+					icon: 'waldo.png',
+					size: new google.maps.Size(50, 50)
 				});
+
 				marker.setMap(map);
 					
 				// Open info window on click of marker
@@ -65,29 +70,50 @@
 				});
 			}
 
-			var request = new XMLHttpRequest();
-			request.open("POST", "https://defense-in-derpth.herokuapp.com/submit", true);
-			request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-			request.send("username=" + myUserName + "&lat=" + myLat + "&lng=" + myLng);
-			request.onreadystatechange = function() {
-				if (request.readyState == 4 && request.status == 200) {
-					console.log("GOT HERE");
-					data = JSON.parse(request.responseText); // elements == list of user objects
-					users = data["passengers"];
-					if (!users) {
-						console.log("not passengers");
-						users = data["vehicles"];
-						iAmPassenger = true;
-					}
-					console.log(users);
+			function setData() {
+				var request = new XMLHttpRequest();
+				request.open("POST", "https://defense-in-derpth.herokuapp.com/submit", true);
+				request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				request.send("username=" + myUserName + "&lat=" + myLat + "&lng=" + myLng);
+				request.onreadystatechange = function() {
+					if (request.readyState == 4 && request.status == 200) {
+						console.log("GOT HERE");
+						data = JSON.parse(request.responseText); // elements == list of user objects
+						users = data["passengers"];
+						if (!users) {
+							console.log("not passengers");
+							users = data["vehicles"];
+							iAmPassenger = true;
+						}
+						console.log(users);
 
-					console.log(request.responseText);
-					for (i = 0; i < users.length; i++) {
-						// do something with every user object
-						console.log("hi"); // not getting here or no users
+						console.log(request.responseText);
+						for (i = 0; i < users.length; i++) {
+							console.log('User: ' + i);
+							coords = new google.maps.LatLng(users[i]['lat'], users[i]['lng']);
+							console.log("Coordinates: " + coords);
+							username = users[i]['username'];
+							distance = google.maps.geometry.spherical.computeDistanceBetween(me, coords) /// 1609.34;
+							console.log("Distance in meters: " + distance);
+							infoString = "Hi! My username is " + username + ", and I'm " + distance + " miles away from you. Pick me up please!";
+							users[i] = new google.maps.Marker({
+								position: coords,
+								title: infoString
+							});
+							if (iAmPassenger) {
+								users[i]['icon'] = 'vehicle.png';
+							} else {
+								users[i]['icon'] = 'waldo.png';
+							}
+							users[i].setMap(map);
+							google.maps.event.addListener(users[i], 'click', function() {
+								infowindow.setContent(users[i].title);
+								infowindow.open(map, users[i]);
+							});
+						}
 					}
-				}
-			};
+				};
+			}
 
 		</script>
 	</head>
