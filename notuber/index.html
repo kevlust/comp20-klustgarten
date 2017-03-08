@@ -56,8 +56,8 @@
 				// Create a marker
 				marker = new google.maps.Marker({
 					position: me,
-					title: 'hi',//myUserName,
-					icon: 'waldo.png',
+					title: myUserName,
+					icon: 'minion.png',
 					size: new google.maps.Size(50, 50)
 				});
 
@@ -65,8 +65,8 @@
 					
 				// Open info window on click of marker
 				google.maps.event.addListener(marker, 'click', function() {
-					infowindow.setContent(marker.title);
-					infowindow.open(map, marker);
+					infowindow.setContent(this.title);
+					infowindow.open(map, this);
 				});
 			}
 
@@ -77,8 +77,14 @@
 				request.send("username=" + myUserName + "&lat=" + myLat + "&lng=" + myLng);
 				request.onreadystatechange = function() {
 					if (request.readyState == 4 && request.status == 200) {
-						console.log("GOT HERE");
-						data = JSON.parse(request.responseText); // elements == list of user objects
+						
+						// harcoded data. DELETE
+						data = JSON.parse('{"passengers":[{"_id":"589bd3258451126182dfbc63","username":"dwR3TbOH","lat":20.3,"lng":20.4,"created_at":"2017-02-09T02:25:41.166Z"}]}');
+
+						// real data. PUT BACK
+						//data = JSON.parse(request.responseText); // elements == list of user objects
+
+
 						users = data["passengers"];
 						if (!users) {
 							console.log("not passengers");
@@ -93,22 +99,24 @@
 							coords = new google.maps.LatLng(users[i]['lat'], users[i]['lng']);
 							console.log("Coordinates: " + coords);
 							username = users[i]['username'];
-							distance = google.maps.geometry.spherical.computeDistanceBetween(me, coords) /// 1609.34;
-							console.log("Distance in meters: " + distance);
-							infoString = "Hi! My username is " + username + ", and I'm " + distance + " miles away from you. Pick me up please!";
+							console.log(username);
+							distance = (google.maps.geometry.spherical.computeDistanceBetween(me, coords) / 1609.34).toFixed(2);
+							console.log("Distance: " + distance);
+							infoString = "Hi! My username is " + username + ", and I'm " + distance + " miles away from you. See you soon?";
 							users[i] = new google.maps.Marker({
 								position: coords,
+								icon: 'black_car.png',
 								title: infoString
 							});
 							if (iAmPassenger) {
-								users[i]['icon'] = 'vehicle.png';
+								users[i].icon = 'black_car.png';
 							} else {
-								users[i]['icon'] = 'waldo.png';
+								users[i].icon = 'waldo.png';
 							}
 							users[i].setMap(map);
 							google.maps.event.addListener(users[i], 'click', function() {
-								infowindow.setContent(users[i].title);
-								infowindow.open(map, users[i]);
+								infowindow.setContent(this.title);
+								infowindow.open(map, this);
 							});
 						}
 					}
