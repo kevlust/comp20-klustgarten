@@ -14,7 +14,7 @@
 			var myUserName = "52iVwuEg";
 			var me = new google.maps.LatLng(myLat, myLng);
 			var myOptions = {
-						zoom: 13, // The larger the zoom number, the bigger the zoom
+						zoom: 15, // The larger the zoom number, the bigger the zoom
 						center: me,
 						mapTypeId: google.maps.MapTypeId.ROADMAP
 					};
@@ -25,19 +25,16 @@
 			
 			function init()
 			{
-				console.log('init function reached');
 				map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 				getMyLocation();
 			}
 			
 			function getMyLocation() {
-				console.log("getMyLocation()");
 				if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
 					navigator.geolocation.getCurrentPosition(function(position) {
 						myLat = position.coords.latitude;
 						myLng = position.coords.longitude;
-						setData();
-
+						setData(); // set other users, if any
 						renderMap();
 					});
 				}
@@ -56,9 +53,9 @@
 				// Create a marker
 				marker = new google.maps.Marker({
 					position: me,
-					title: myUserName,
-					icon: 'minion.png',
-					size: new google.maps.Size(50, 50)
+					title:    myUserName,
+					icon:    'minion.png',
+					size:     new google.maps.Size(50, 50)
 				});
 
 				marker.setMap(map);
@@ -74,45 +71,39 @@
 				var request = new XMLHttpRequest();
 				request.open("POST", "https://defense-in-derpth.herokuapp.com/submit", true);
 				request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-				request.send("username=" + myUserName + "&lat=" + myLat + "&lng=" + myLng);
+				request.send("username=" + myUserName
+					        + "&lat="    + myLat
+					        + "&lng="    + myLng);
+
 				request.onreadystatechange = function() {
 					if (request.readyState == 4 && request.status == 200) {
-						
-						// harcoded data. DELETE
-						data = JSON.parse('{"passengers":[{"_id":"589bd3258451126182dfbc63","username":"dwR3TbOH","lat":20.3,"lng":20.4,"created_at":"2017-02-09T02:25:41.166Z"}]}');
-
-						// real data. PUT BACK
-						//data = JSON.parse(request.responseText); // elements == list of user objects
-
-
+						data = JSON.parse(request.responseText);
 						users = data["passengers"];
-						if (!users) {
-							console.log("not passengers");
+
+						if (!users) { // there is no passengers
 							users = data["vehicles"];
 							iAmPassenger = true;
 						}
-						console.log(users);
 
-						console.log(request.responseText);
 						for (i = 0; i < users.length; i++) {
-							console.log('User: ' + i);
-							coords = new google.maps.LatLng(users[i]['lat'], users[i]['lng']);
-							console.log("Coordinates: " + coords);
-							username = users[i]['username'];
-							console.log(username);
-							distance = (google.maps.geometry.spherical.computeDistanceBetween(me, coords) / 1609.34).toFixed(2);
-							console.log("Distance: " + distance);
-							infoString = "Hi! My username is " + username + ", and I'm " + distance + " miles away from you. See you soon?";
+							coords     = new google.maps.LatLng(users[i].lat, users[i].lng);
+							username   = users[i].username;
+							milesAway  = (google.maps.geometry.spherical
+								         .computeDistanceBetween(me, coords)
+								         / 1609.34).toFixed(2);
+							infoString = "Hi! My username is " + username + ", and <br/> I'm "
+							           +  milesAway + " miles away from you. <br/> Pick me!";
+
 							users[i] = new google.maps.Marker({
 								position: coords,
-								icon: 'black_car.png',
-								title: infoString
+								icon:     'black_car.png',
+								title:    infoString
 							});
-							if (iAmPassenger) {
-								users[i].icon = 'black_car.png';
-							} else {
+
+							if (!iAmPassenger) {
 								users[i].icon = 'waldo.png';
 							}
+
 							users[i].setMap(map);
 							google.maps.event.addListener(users[i], 'click', function() {
 								infowindow.setContent(this.title);
