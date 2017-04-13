@@ -69,7 +69,9 @@
 
 			function setData() {
 				var request = new XMLHttpRequest();
-				request.open("POST", "https://defense-in-derpth.herokuapp.com/submit", true);
+				request.open("POST", "https://serene-gorge-88625.herokuapp.com/submit", true);
+				//request.open("POST", "https://serene-gorge-88625.herokuapp.com/", true);
+
 				request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				request.send("username=" + myUserName
 					        + "&lat="    + myLat
